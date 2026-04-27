@@ -7,6 +7,10 @@ def main():
     parser.add_argument("source", help="Caminho do arquivo de vídeo, índice da câmera (ex: 0) ou URL RTSP")
     parser.add_argument("--type", choices=["video", "camera", "rtsp"], default=None,
                         help="Tipo da fonte (opcional, mas ajuda na interpretação).")
+    parser.add_argument("--width", type=int, default=None,
+                        help="Força a largura do frame. Se não especificado, usa a nativa.")
+    parser.add_argument("--height", type=int, default=None,
+                        help="Força a altura do frame. Se não especificado, usa a nativa.")
     parser.add_argument("--no-display", action="store_true",
                         help="Executa sem exibir a janela (modo headless). A interação por teclado é desabilitada.")
     parser.add_argument("--save-interval", type=float, default=0.0,
@@ -33,10 +37,15 @@ def main():
         print("Erro: não foi possível abrir a fonte.")
         sys.exit(1)
 
+    # Forçar resolução se os argumentos forem fornecidos
+    if args.width is not None:
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, args.width)
+    if args.height is not None:
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, args.height)
+
     # Obter FPS da fonte para cálculo do intervalo de frames
     fps = cap.get(cv2.CAP_PROP_FPS)
     if fps <= 0:
-        # Valor padrão caso não seja possível obter o FPS (comum em câmeras/RTSP)
         fps = 30.0
         print("Aviso: FPS não detectado. Usando padrão de 30 FPS para salvamento automático.")
 
@@ -75,7 +84,6 @@ def main():
             if key == ord('q'):
                 break
             elif key == ord('s'):
-                # Salvamento manual (nome baseado no contador atual)
                 filename = f"frame_{frame_count:06d}_manual.png"
                 cv2.imwrite(filename, frame)
                 print(f"Frame salvo manualmente como {filename}")
